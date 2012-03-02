@@ -17,13 +17,16 @@ Backbone.Stage = (function(Backbone, _) {
 		testEl: document.createElement('div'),
 		prefix: '',
 
-		initialize: function(w, h) {
-			var width = w !== undefined ? h : window.innerWidth,
-				height = h !== undefined ? h : window.innerHeight;
+		router: null,
+		container: null,
 
-			this.currentScene = null;
-			this.resize(width,height);
+		scenes: {
+			app: null,
+			current: null,
+			previous: null
+		},
 
+		initialize: function() {
 			if (Modernizr.touch) {
 				this.clickEvent = 'touchstart';
 				this.delayedClickEvent = 'touchend';
@@ -36,21 +39,33 @@ Backbone.Stage = (function(Backbone, _) {
 				this.upEvent = 'click';
 			}
 
+			// Test for the current prefixes
+			this.testPrefix();
+		},
+
+		/*
+			Main entry point for app.
+			@method : setup
+			@param obj : container object used to represent the stage
+			@param w : width of viewport
+			@param h : height of viewport
+		*/
+
+		setup: function(obj, w, h) {
+			
+			var width = w !== undefined ? h : window.innerWidth,
+				height = h !== undefined ? h : window.innerHeight;
+
+			this.resize(width,height);
+
 			if(width > height) {
 				this.orientation = this.ORIENTATIONS.PORTRAIT;
 			} else {
 				this.orientation = this.ORIENTATIONS.LANDSCAPE;
 			}
 
-			for( var key in this.vendors ) {
-
-				if (this.testEl.style[this.vendors[key] + 'TransitionProperty'] !== undefined) {
-					this.prefix = '-' + this.vendors[key] + '-';
-					return false;
-				}
-			}
-
-			this.testEl = null;
+			// Add the container
+			this.container = $(obj);
 		},
 
 		/*
@@ -112,7 +127,7 @@ Backbone.Stage = (function(Backbone, _) {
 				y = args.y !== undefined ? this.calcHeight(args.y) : x,
 				z = args.z !== undefined ? args.z : false,
 
-				returnObject = {
+				returnCSSObject = {
 					width: w,
 					height: h
 				};
@@ -132,10 +147,10 @@ Backbone.Stage = (function(Backbone, _) {
 			// The point is that this stage manager is library agnostic and just passes
 			// back the raw css property objects.
 			
-			_.extend(returnObject, this.translate(x, y, z));
+			_.extend(returnCSSObject, this.translate(x, y, z));
 			
 			// Return our object containing css properties
-			return returnObject;
+			return returnCSSObject;
 		},
 
 		/*
@@ -160,6 +175,24 @@ Backbone.Stage = (function(Backbone, _) {
 			obj[prefix] = translate;
 
 			return obj;
+		},
+
+		/*
+			Feature detection to test for the current prefix
+			@method : testPrefix
+		*/
+		
+		testPrefix: function() {
+
+			for( var key in this.vendors ) {
+
+				if (this.testEl.style[this.vendors[key] + 'TransitionProperty'] !== undefined) {
+					this.prefix = '-' + this.vendors[key] + '-';
+					return false;
+				}
+			}
+
+			this.testEl = null;
 		}
 
 	});
